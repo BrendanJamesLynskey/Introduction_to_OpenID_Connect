@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction to OpenID Connect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/theme/black.min.css">
+<style>
+  :root{--amber:#f5a623;--green:#4ecb8d;--purple:#a78bfa;--blue:#60a5fa;--red:#f87171;
+    --bg:#0a0a0f;--bg2:#10101a;--bg3:#181824;--border:#2a2a3a;--text:#e8e8f0;--muted:#8888a8;}
+  .reveal-viewport{background:var(--bg);} .reveal .slides section{background:transparent;}
+  .reveal{font-family:'DM Sans',sans-serif;color:var(--text);}
+  .reveal h1,.reveal h2,.reveal h3{font-family:'Playfair Display',serif;font-weight:700;}
+  .reveal h1{font-size:1.6em;color:var(--amber);line-height:1.1;}
+  .reveal h2{font-size:1.1em;color:var(--amber);margin-bottom:.2em;}
+  .reveal h3{font-size:.78em;color:var(--green);margin-bottom:.15em;}
+  .reveal p{font-size:.56em;line-height:1.45;color:var(--text);}
+  .reveal li{font-size:.54em;line-height:1.45;margin-bottom:.1em;}
+  .reveal code{font-family:'JetBrains Mono',monospace;font-size:.72em;}
+  .reveal pre{box-shadow:none;background:var(--bg3);border:1px solid var(--border);
+    border-radius:6px;padding:.3em .5em;margin:.25em 0;}
+  .reveal pre code{font-size:.52em;line-height:1.35;background:transparent;color:#cdd6f4;}
+  .slide-hdr{display:flex;align-items:center;gap:.4em;border-bottom:1px solid var(--border);
+    padding-bottom:.2em;margin-bottom:.3em;}
+  .slide-hdr .tag{font-family:'JetBrains Mono',monospace;font-size:.42em;font-weight:500;
+    color:var(--bg);background:var(--amber);padding:.1em .4em;border-radius:3px;letter-spacing:.04em;}
+  .slide-hdr h2{margin:0;font-size:.95em;}
+  .cols{display:grid;gap:.5em;} .cols-2{grid-template-columns:1fr 1fr;}
+  .cols-3{grid-template-columns:1fr 1fr 1fr;} .cols-4{grid-template-columns:1fr 1fr 1fr 1fr;}
+  .cols-6040{grid-template-columns:6fr 4fr;} .cols-4060{grid-template-columns:4fr 6fr;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:.35em .6em;}
+  .card.amber{border-left:3px solid var(--amber);} .card.green{border-left:3px solid var(--green);}
+  .card.purple{border-left:3px solid var(--purple);} .card.blue{border-left:3px solid var(--blue);}
+  .card.red{border-left:3px solid var(--red);}
+  .card h3{font-size:.64em;margin:0 0 .12em;} .card p{font-size:.52em;margin:0;color:#b8b8d0;}
+  .card ul{margin:0;padding-left:1em;} .card li{font-size:.52em;color:#b8b8d0;margin-bottom:.02em;}
+  .reveal table{width:100%;border-collapse:collapse;font-size:.5em;}
+  .reveal table th{background:var(--bg3);color:var(--amber);font-weight:600;
+    padding:.2em .4em;border:1px solid var(--border);text-align:left;}
+  .reveal table td{padding:.18em .4em;border:1px solid var(--border);color:#ccc;}
+  .reveal table tr:nth-child(even) td{background:#0e0e18;}
+  .a{color:var(--amber);font-weight:600;} .g{color:var(--green);font-weight:600;}
+  .p{color:var(--purple);font-weight:600;} .b{color:var(--blue);font-weight:600;}
+  .r{color:var(--red);font-weight:600;} .mono{font-family:'JetBrains Mono',monospace;}
+  svg.diagram{display:block;margin:0 auto;overflow:visible;}
+  .pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.44em;
+    padding:.08em .4em;border-radius:99px;border:1px solid;margin:0 .08em;}
+  .pill.amber{color:var(--amber);border-color:var(--amber);}
+  .pill.green{color:var(--green);border-color:var(--green);}
+  .pill.purple{color:var(--purple);border-color:var(--purple);}
+  .pill.blue{color:var(--blue);border-color:var(--blue);}
+  .reveal .slide-footer{display:none;}
+  .title-slide h1{font-size:1.8em;}
+  .title-slide .subtitle{font-size:.7em;color:var(--green);font-family:'DM Sans',sans-serif;
+    font-weight:300;letter-spacing:.04em;margin:.3em 0 .6em;}
+  .title-slide .meta{font-size:.48em;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+  .ss-row{display:flex;gap:.25em;align-items:center;margin:.1em 0;font-size:.55em;
+    font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
+  .ss-node{padding:.2em .55em;border-radius:5px;font-size:.9em;
+    background:var(--bg3);border:1px solid var(--border);color:var(--text);}
+  .ss-node.active{background:#1a2a1a;border-color:var(--green);color:var(--green);}
+  .ss-node.done{background:#1a1a2a;border-color:var(--purple);color:var(--purple);}
+  .ss-arrow{color:var(--amber);} .ss-label{font-size:.8em;color:var(--muted);margin-left:.3em;}
+  .reveal ul,.reveal ol{margin:.15em 0 .15em 1em;}
+  .reveal .slides>section{display:flex!important;flex-direction:column!important;
+    overflow-y:auto!important;align-items:stretch!important;justify-content:flex-start!important;}
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+
+<!-- 01 — TITLE -->
+<section class="title-slide" data-background-color="#0a0a0f">
+  <div style="text-align:left; max-width:820px; margin:0 auto; padding: 1em 0;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:.5em; color:var(--muted); margin-bottom:.4em; letter-spacing:.1em;">
+      TECHNICAL PRESENTATION &middot; IDENTITY SERIES
+    </div>
+    <h1>Introduction to<br>OpenID Connect</h1>
+    <div class="subtitle">The identity layer that turned OAuth into "Sign in with…"</div>
+    <div style="width:60px; height:3px; background:var(--amber); margin-bottom:1.4em;"></div>
+    <div style="display:flex; gap:.4em; flex-wrap:wrap; margin-bottom:1em;">
+      <span class="pill amber">OIDC 1.0</span>
+      <span class="pill green">ID token</span>
+      <span class="pill purple">Discovery</span>
+      <span class="pill blue">Federation 1.0</span>
+      <span class="pill amber">FAPI 2.0</span>
+    </div>
+    <div class="ss-row" style="margin-top:0.6em;">
+      <span class="ss-node active">👤 User</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node active">🌐 RP (your app)</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node active">🔐 OP / IdP</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node done">🪪 ID token</span>
+      <span class="ss-arrow">→</span>
+      <span class="ss-node done">✓ "logged in as Alice"</span>
+    </div>
+    <p style="max-width:640px; color:#a0a0c0; font-size:.56em; line-height:1.5; margin-top:1em;">
+      OAuth 2.0 (authorisation) plus a signed identity token = OIDC. Companion to <a href="https://github.com/BrendanJamesLynskey/Introduction_to_OAuth" style="color:#4ecb8d;">Introduction to OAuth</a> and <a href="https://github.com/BrendanJamesLynskey/OAuth_for_MCP" style="color:#4ecb8d;">OAuth for MCP</a>.
+    </p>
+    <div class="meta" style="margin-top:1.4em;">
+      Identity &nbsp;·&nbsp; ID Tokens &nbsp;·&nbsp; Discovery &nbsp;·&nbsp; Federation
+    </div>
+  </div>
+</section>
+
+
+<!-- 02 — TOPICS -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">01</span><h2>Topics</h2></div>
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Foundations</h3>
+        <ul>
+          <li>Why OIDC exists — authentication ≠ authorisation</li>
+          <li>2014 → 2025 history; OIDC vs OpenID 2.0 vs SAML</li>
+          <li>Roles &amp; terminology — RP, OP, End-User</li>
+          <li>The relationship to OAuth 2.0</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">The protocol in detail</h3>
+        <ul>
+          <li>Authorisation Code + <code>openid</code> scope flow</li>
+          <li>ID token anatomy — header, payload, claims, signature</li>
+          <li>Validation checklist (the part everyone gets wrong)</li>
+          <li>Discovery, JWKS, UserInfo</li>
+          <li>Hybrid &amp; response_type variants</li>
+          <li>Logout — RP-initiated, back-channel, front-channel</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Modern OIDC</h3>
+        <ul>
+          <li>CIBA — phone-approval flows</li>
+          <li>SIOPv2 — Self-Issued OPs &amp; verifiable credentials</li>
+          <li>OpenID Federation 1.0 (Sep 2024)</li>
+          <li>FAPI 2.0 — financial-grade profile</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">In practice</h3>
+        <ul>
+          <li>Real-world IdPs — Google, Entra, Apple, Okta, Auth0, Keycloak</li>
+          <li>OIDC vs SAML decision</li>
+          <li>Workload OIDC — GitHub Actions → cloud STS</li>
+          <li>Common bugs and mitigations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 03 — WHY OIDC -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">02</span><h2>Why OIDC Exists</h2></div>
+  <p>OAuth 2.0 answers <span class="a">"may this app act on the user's behalf?"</span> — it never says <em>who</em> the user is. Apps that wanted "sign in" had to abuse OAuth (e.g. fetch <code>/me</code> from Facebook and trust the result). OIDC <span class="g">turns OAuth's authorisation answer into a verifiable identity assertion</span>.</p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Authentication vs authorisation</h3>
+        <ul>
+          <li><span class="g">Authentication</span> — proves <em>who</em> someone is. ("This is Alice.")</li>
+          <li><span class="g">Authorisation</span> — decides <em>what</em> they can do. ("Alice may read invoices.")</li>
+          <li>OAuth 2.0 = authorisation only. OIDC = authentication on top.</li>
+          <li>Your app needs both — and they are not interchangeable.</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">What OIDC adds to OAuth</h3>
+        <ul>
+          <li><span class="a">ID token</span> — a signed JWT with the user's identity</li>
+          <li><span class="a">UserInfo endpoint</span> — fetch profile attributes</li>
+          <li><span class="a">openid scope</span> — opt-in marker</li>
+          <li><span class="a">Standard claims</span> — <code>sub</code>, <code>email</code>, <code>name</code>, <code>picture</code>, …</li>
+          <li><span class="a">Discovery</span> — <code>/.well-known/openid-configuration</code></li>
+          <li><span class="a">Session management</span> — logout, back-channel</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">"Sign in with…"</h3>
+        <p>Every "Sign in with Google / Microsoft / Apple / GitHub" button you've ever clicked is OIDC. The standard turned what was a "social login" hack in 2010 into the default identity protocol of the modern web.</p>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">Why not just use OAuth?</h3>
+        <ul>
+          <li>OAuth access tokens are <em>not</em> identity assertions — they say "this client may call this API", not "this is user U"</li>
+          <li>Validating an access token gives you authorisation; only an ID token tells you <em>who</em> authenticated</li>
+          <li>OAuth has no standard way to express "I logged in 3 minutes ago" — OIDC does (<code>auth_time</code>)</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Classic mistake</h3>
+        <p>Using an OAuth access token as a login indicator. The OAuth deck (slide 15) has the full picture; this deck dives in to the consequences.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 04 — HISTORY -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">03</span><h2>A Brief History</h2></div>
+
+  <svg class="diagram" viewBox="0 0 980 220" width="940" height="220">
+    <line x1="40" y1="110" x2="940" y2="110" stroke="#2a2a3a" stroke-width="2"/>
+    <g font-family="Playfair Display,serif" font-size="13" font-weight="700" text-anchor="middle">
+      <circle cx="80" cy="110" r="6" fill="#f87171"/><text x="80" y="55" fill="#f87171">2005</text>
+      <circle cx="220" cy="110" r="6" fill="#f5a623"/><text x="220" y="55" fill="#f5a623">2007</text>
+      <circle cx="360" cy="110" r="6" fill="#a78bfa"/><text x="360" y="55" fill="#a78bfa">2014</text>
+      <circle cx="500" cy="110" r="6" fill="#4ecb8d"/><text x="500" y="55" fill="#4ecb8d">2017</text>
+      <circle cx="640" cy="110" r="6" fill="#60a5fa"/><text x="640" y="55" fill="#60a5fa">2022</text>
+      <circle cx="780" cy="110" r="6" fill="#60a5fa"/><text x="780" y="55" fill="#60a5fa">2024</text>
+      <circle cx="900" cy="110" r="6" fill="#f5a623"/><text x="900" y="55" fill="#f5a623">2025+</text>
+    </g>
+    <g font-family="JetBrains Mono,monospace" font-size="9" fill="#ccc" text-anchor="middle">
+      <text x="80" y="140">OpenID 1.0/2.0</text><text x="80" y="153">XML, redirect-based</text>
+      <text x="220" y="140">OAuth 1.0</text><text x="220" y="153">delegation, not identity</text>
+      <text x="360" y="140">OIDC Core 1.0</text><text x="360" y="153">final spec</text>
+      <text x="500" y="140">FAPI 1.0 + CIBA</text><text x="500" y="153">finance-grade</text>
+      <text x="640" y="140">SIOPv2 draft</text><text x="640" y="153">verifiable creds</text>
+      <text x="780" y="140">OpenID Federation 1.0</text><text x="780" y="153">Sep 2024</text>
+      <text x="900" y="140">FAPI 2.0,</text><text x="900" y="153">EU eIDAS / DPP</text>
+    </g>
+    <text x="490" y="200" text-anchor="middle" fill="#888" font-family="DM Sans,sans-serif" font-size="11">Twenty years from "OpenID URLs" to a federated, JWT-based identity layer powering nearly every modern login.</text>
+  </svg>
+
+  <div class="cols cols-2" style="margin-top:0.3em;">
+    <div class="card amber">
+      <h3 class="a">OpenID 1.0/2.0 — the predecessor</h3>
+      <ul>
+        <li>2005–2007: <code>https://alice.myopenid.com</code> as your identity</li>
+        <li>XML-based, redirect-driven, no JSON, no signed tokens</li>
+        <li>Famously confusing UX ("type your URL?")</li>
+        <li>Killed by social login; Yahoo &amp; AOL never got it right</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3 class="g">OIDC reset (2014) and beyond</h3>
+      <ul>
+        <li>Built on OAuth 2.0 + JWT — JSON-native, mobile-friendly</li>
+        <li>2017: FAPI 1.0 — financial-grade APIs (Open Banking)</li>
+        <li>2022: SIOPv2 — verifiable credentials, decentralised identity</li>
+        <li>Sep 2024: <span class="a">OpenID Federation 1.0</span> finalised — programmatic trust between OPs at scale</li>
+        <li>2025+: FAPI 2.0 GA, EU eIDAS 2.0 / Digital Identity Wallet</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
+<!-- 05 — OIDC ON OAUTH -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">04</span><h2>OIDC = OAuth + Identity Token</h2></div>
+  <p>OIDC is not a separate protocol — it's a <span class="a">profile of OAuth 2.0</span> plus a few small additions. Everything you know from the <a href="https://github.com/BrendanJamesLynskey/Introduction_to_OAuth">OAuth deck</a> still applies; OIDC just changes <em>what comes back</em>.</p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">A vanilla OAuth 2.0 request</h3>
+<pre><code>GET /authorize?
+  response_type=code&amp;
+  client_id=app123&amp;
+  scope=invoices:read&amp;
+  redirect_uri=https://app/cb&amp;
+  state=...&amp;code_challenge=...&amp;code_challenge_method=S256
+
+# Token response
+{ "access_token": "eyJ...",
+  "token_type":   "Bearer",
+  "expires_in":   3600 }</code></pre>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">The same request as OIDC</h3>
+<pre><code>GET /authorize?
+  response_type=code&amp;
+  client_id=app123&amp;
+  scope=<span style="color:#4ecb8d">openid</span> profile email&amp;     # ← magic word
+  redirect_uri=https://app/cb&amp;
+  state=...&amp;<span style="color:#4ecb8d">nonce=abc123</span>&amp;            # ← required by OIDC
+  code_challenge=...&amp;code_challenge_method=S256
+
+# Token response — now has an ID token
+{ "access_token":  "eyJ...",
+  "<span style="color:#4ecb8d">id_token</span>":      "eyJ...",   # ← the identity assertion
+  "token_type":    "Bearer",
+  "expires_in":    3600 }</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">What changes</h3>
+        <ul>
+          <li>Add the <code>openid</code> scope (mandatory)</li>
+          <li>Add <code>nonce</code> on the request, validate it on the ID token</li>
+          <li>Token response now includes <code>id_token</code> alongside <code>access_token</code></li>
+          <li>You can also call <code>/userinfo</code> with the access token</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">Three new roles' names</h3>
+        <ul>
+          <li><span class="a">Relying Party (RP)</span> — your app (= OAuth Client)</li>
+          <li><span class="a">OpenID Provider (OP)</span> — the identity service (= OAuth AS)</li>
+          <li><span class="a">End-User</span> — the human (= OAuth Resource Owner)</li>
+          <li>Same actors, different names — one of OIDC's needless terminology shifts</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">The hidden requirement</h3>
+        <p>An OIDC-conformant flow <em>must</em> use Authorisation Code + PKCE + nonce. Implicit and hybrid response types still exist in the spec but are deprecated by FAPI and most modern profiles.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 06 — CORE FLOW -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">05</span><h2>Core Flow — Authorisation Code with <code>openid</code></h2></div>
+
+  <svg class="diagram" viewBox="0 0 940 320" width="900" height="320">
+    <rect x="20"  y="20" width="140" height="40" rx="5" fill="#1a1a2a" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="90"  y="45" text-anchor="middle" fill="#60a5fa" font-family="Playfair Display,serif" font-size="13" font-weight="700">User-Agent</text>
+    <rect x="270" y="20" width="140" height="40" rx="5" fill="#1a1a2a" stroke="#f5a623" stroke-width="1.5"/>
+    <text x="340" y="45" text-anchor="middle" fill="#f5a623" font-family="Playfair Display,serif" font-size="13" font-weight="700">Relying Party</text>
+    <rect x="520" y="20" width="160" height="40" rx="5" fill="#1a1a2a" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="600" y="45" text-anchor="middle" fill="#a78bfa" font-family="Playfair Display,serif" font-size="13" font-weight="700">OpenID Provider</text>
+    <rect x="770" y="20" width="150" height="40" rx="5" fill="#1a1a2a" stroke="#4ecb8d" stroke-width="1.5"/>
+    <text x="845" y="45" text-anchor="middle" fill="#4ecb8d" font-family="Playfair Display,serif" font-size="13" font-weight="700">UserInfo (opt.)</text>
+
+    <line x1="90"  y1="60" x2="90"  y2="310" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="340" y1="60" x2="340" y2="310" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="600" y1="60" x2="600" y2="310" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="845" y1="60" x2="845" y2="310" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <line x1="90" y1="80" x2="340" y2="80" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#oa)"/>
+    <text x="215" y="75" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono,monospace" font-size="10">1. click "Sign in with X"</text>
+
+    <line x1="340" y1="105" x2="90" y2="105" stroke="#f5a623" stroke-width="1.2" marker-end="url(#ob)"/>
+    <text x="215" y="100" text-anchor="middle" fill="#f5a623" font-family="JetBrains Mono,monospace" font-size="10">2. 302 → /authorize?scope=openid&amp;nonce=…&amp;PKCE</text>
+
+    <line x1="90" y1="130" x2="600" y2="130" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#oc)"/>
+    <text x="345" y="125" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono,monospace" font-size="10">3. user authenticates &amp; consents at OP</text>
+
+    <line x1="600" y1="155" x2="90" y2="155" stroke="#a78bfa" stroke-width="1.2" marker-end="url(#od)"/>
+    <text x="345" y="150" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono,monospace" font-size="10">4. 302 redirect_uri?code=…&amp;state=…</text>
+
+    <line x1="90" y1="180" x2="340" y2="180" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#oa)"/>
+    <text x="215" y="175" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono,monospace" font-size="10">5. browser delivers ?code=…</text>
+
+    <line x1="340" y1="210" x2="600" y2="210" stroke="#f5a623" stroke-width="1.4" marker-end="url(#oc)"/>
+    <text x="470" y="205" text-anchor="middle" fill="#f5a623" font-family="JetBrains Mono,monospace" font-size="10">6. POST /token (code, code_verifier, client_id+secret)</text>
+
+    <line x1="600" y1="235" x2="340" y2="235" stroke="#a78bfa" stroke-width="1.4" marker-end="url(#od)"/>
+    <text x="470" y="230" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono,monospace" font-size="10">7. { access_token, refresh_token, <tspan style="font-weight:700">id_token</tspan> }</text>
+
+    <line x1="340" y1="265" x2="845" y2="265" stroke="#f5a623" stroke-width="1.2" marker-end="url(#oe)"/>
+    <text x="592" y="260" text-anchor="middle" fill="#f5a623" font-family="JetBrains Mono,monospace" font-size="10">8. (optional) GET /userinfo Authorization: Bearer &lt;access_token&gt;</text>
+
+    <line x1="845" y1="290" x2="340" y2="290" stroke="#4ecb8d" stroke-width="1.2" marker-end="url(#of)"/>
+    <text x="592" y="285" text-anchor="middle" fill="#4ecb8d" font-family="JetBrains Mono,monospace" font-size="10">9. { sub, email, name, picture, … }</text>
+
+    <defs>
+      <marker id="oa" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#60a5fa"/></marker>
+      <marker id="ob" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#f5a623"/></marker>
+      <marker id="oc" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#f5a623"/></marker>
+      <marker id="od" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#a78bfa"/></marker>
+      <marker id="oe" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#f5a623"/></marker>
+      <marker id="of" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#4ecb8d"/></marker>
+    </defs>
+  </svg>
+
+  <div class="cols cols-3" style="margin-top:0.2em;">
+    <div class="card amber"><h3 class="a">Steps 1–5: front-channel</h3><p>Browser-visible. Carries the <code>code</code> only — no tokens.</p></div>
+    <div class="card green"><h3 class="g">Steps 6–7: back-channel</h3><p>Server-to-server, TLS. ID token comes here. PKCE verifier required.</p></div>
+    <div class="card purple"><h3 class="p">Steps 8–9: optional</h3><p>UserInfo for fresh attributes; the ID token alone is enough for login.</p></div>
+  </div>
+</section>
+
+
+<!-- 07 — ID TOKEN ANATOMY -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">06</span><h2>The ID Token — Anatomy</h2></div>
+  <p>An ID token is a <span class="a">signed JWT</span>. Three dot-separated base64url parts: header, payload, signature. The OP signs; the RP verifies offline via JWKS.</p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Decoded header + payload</h3>
+<pre><code># Header
+{
+  "alg": "RS256",
+  "kid": "abc123",
+  "typ": "JWT"
+}
+
+# Payload — required claims
+{
+  "iss": "https://accounts.google.com",
+  "sub": "1098765432109876543210",
+  "aud": "<your-client-id>.apps.googleusercontent.com",
+  "iat": 1714000000,
+  "exp": 1714003600,
+  "nonce": "abc123"
+}</code></pre>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">Required claims (RFC 8259)</h3>
+        <table>
+          <thead><tr><th>Claim</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>iss</code></td><td>Issuer URL — must match OP's metadata</td></tr>
+            <tr><td><code>sub</code></td><td>Stable user-ID at this OP</td></tr>
+            <tr><td><code>aud</code></td><td>Your client ID — exact match</td></tr>
+            <tr><td><code>iat</code></td><td>Issued at (Unix seconds)</td></tr>
+            <tr><td><code>exp</code></td><td>Expiry — typically 5–15 min</td></tr>
+            <tr><td><code>nonce</code></td><td>Echoes the value you sent</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Common optional claims</h3>
+        <ul>
+          <li><code>auth_time</code> — when the user actually authenticated</li>
+          <li><code>acr</code> — authentication context class (e.g. <code>urn:mace:incommon:iap:silver</code>)</li>
+          <li><code>amr</code> — authentication methods (<code>["pwd","mfa","otp"]</code>)</li>
+          <li><code>azp</code> — authorised party (when token has multiple aud)</li>
+          <li><code>at_hash</code> — hash of access token, binds them together</li>
+          <li><code>c_hash</code> — hash of code (hybrid flow)</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">Standard profile claims</h3>
+        <ul>
+          <li><code>email</code>, <code>email_verified</code></li>
+          <li><code>name</code>, <code>given_name</code>, <code>family_name</code>, <code>preferred_username</code></li>
+          <li><code>picture</code>, <code>locale</code>, <code>zoneinfo</code></li>
+          <li><code>phone_number</code>, <code>phone_number_verified</code></li>
+          <li>Released only if requested via <code>profile</code>, <code>email</code>, <code>phone</code> scopes — and only if the OP exposes them</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Use <code>sub</code> as the user ID</h3>
+        <p><em>Never</em> use <code>email</code>. Email addresses can be transferred between people; <code>sub</code> is a stable opaque ID per OP. Composite key: <code>(iss, sub)</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 08 — ID TOKEN VALIDATION -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">07</span><h2>ID Token Validation — The Checklist</h2></div>
+  <p>Every step here has been the source of a real-world breach. <span class="a">Use a conformant library</span> — <code>jose</code>, <code>oidc-client-ts</code>, <code>openid-client</code>, <code>Microsoft.IdentityModel</code>, <code>Authlib</code>. Don't write this yourself.</p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Cryptographic checks</h3>
+        <ol style="padding-left:1.2em;">
+          <li>Parse header; <span class="r">refuse <code>alg=none</code></span></li>
+          <li><span class="r">Refuse <code>HS256</code> if you only have a public key</span> (alg-confusion CVE-2015-9235 family)</li>
+          <li>Look up key by <code>kid</code> in the OP's cached JWKS</li>
+          <li>Verify the signature with that key</li>
+          <li>If <code>kid</code> not found, refresh JWKS once and retry</li>
+        </ol>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">Claim checks</h3>
+        <ol style="padding-left:1.2em;">
+          <li><code>iss</code> matches the OP discovery's <code>issuer</code> exactly (string-equal)</li>
+          <li><code>aud</code> contains your <code>client_id</code> (and only it)</li>
+          <li>If <code>aud</code> is multi-value, <code>azp</code> equals your <code>client_id</code></li>
+          <li><code>exp</code> is in the future (with small clock skew, ≤ 5 min)</li>
+          <li><code>iat</code> is not unreasonably in the future</li>
+          <li><code>nonce</code> equals the value you sent</li>
+          <li>If you need step-up: check <code>auth_time</code>, <code>acr</code>, <code>amr</code></li>
+        </ol>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">JWKS rotation hygiene</h3>
+        <ul>
+          <li>Cache JWKS for minutes, not days</li>
+          <li>On unknown <code>kid</code>: refetch <em>once</em> and retry; otherwise reject</li>
+          <li>Pin the OP's TLS root if the JWKS endpoint can be MITM'd</li>
+          <li>OPs rotate keys regularly — Google rotates roughly daily</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">Library example (TypeScript / jose)</h3>
+<pre><code>import { createRemoteJWKSet, jwtVerify } from 'jose';
+
+const JWKS = createRemoteJWKSet(
+  new URL('https://accounts.google.com/.well-known/jwks.json')
+);
+
+const { payload } = await jwtVerify(idToken, JWKS, {
+  issuer:   'https://accounts.google.com',
+  audience: process.env.GOOGLE_CLIENT_ID,
+  clockTolerance: 5,
+});
+
+if (payload.nonce !== sessionNonce) throw new Error('nonce');
+return { id: payload.sub, email: payload.email };</code></pre>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Don't use the access token for identity</h3>
+        <p>Access tokens are not signed for you, may be opaque, and aren't bound to an <em>aud</em> you control. Always validate the <em>ID</em> token for "who is this user".</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 09 — DISCOVERY -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">08</span><h2>Discovery — <code>/.well-known/openid-configuration</code></h2></div>
+  <p>Discovery turns "where is the token endpoint?" from configuration into <span class="a">data</span>. The RP fetches one JSON document from the OP at start-up; everything else falls out of it.</p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">A real example</h3>
+<pre><code>$ curl https://accounts.google.com/.well-known/openid-configuration
+
+{
+  "issuer": "https://accounts.google.com",
+  "authorization_endpoint":
+      "https://accounts.google.com/o/oauth2/v2/auth",
+  "token_endpoint":
+      "https://oauth2.googleapis.com/token",
+  "userinfo_endpoint":
+      "https://openidconnect.googleapis.com/v1/userinfo",
+  "revocation_endpoint":
+      "https://oauth2.googleapis.com/revoke",
+  "jwks_uri":
+      "https://www.googleapis.com/oauth2/v3/certs",
+  "response_types_supported":   ["code","token","id_token", ...],
+  "subject_types_supported":    ["public"],
+  "id_token_signing_alg_values_supported": ["RS256"],
+  "scopes_supported":           ["openid","email","profile"],
+  "claims_supported":           ["aud","email", ... ]
+}</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card green">
+        <h3 class="g">What to do with it</h3>
+        <ul>
+          <li>Cache for an hour or two (it almost never changes)</li>
+          <li>Use it to populate every endpoint URL — <em>never</em> hard-code them</li>
+          <li>Re-fetch on JWKS miss or after a long pause</li>
+          <li>Validate <code>iss</code> in tokens against this exact <code>issuer</code> string</li>
+        </ul>
+      </div>
+      <div class="card purple" style="margin-top:0.4em;">
+        <h3 class="p">Multi-tenant OPs</h3>
+        <ul>
+          <li>Microsoft Entra: <code>https://login.microsoftonline.com/{tenant}/v2.0/.well-known/...</code></li>
+          <li>Azure B2C: <code>{tenant}.b2clogin.com/{tenant}/{user-flow}/v2.0/.well-known/...</code></li>
+          <li>Auth0: <code>https://{tenant}.auth0.com/.well-known/...</code></li>
+          <li>Discovery URL = identity = source of truth for the issuer string</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">The "issuer mismatch" trap</h3>
+        <p>Common.com Live Microsoft tokens use a different issuer per tenant; if your code hard-codes <code>"https://login.microsoftonline.com/common/v2.0"</code> you will reject every real customer's token. Always resolve issuer from <code>tid</code> claim ↔ tenant-specific discovery.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 10 — JWKS / KEY ROTATION -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">09</span><h2>JWKS — Public Keys &amp; Rotation</h2></div>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">A JWKS document</h3>
+<pre><code>{
+  "keys": [
+    {
+      "kty": "RSA",
+      "use": "sig",
+      "alg": "RS256",
+      "kid": "1f7d…",
+      "n":   "vK… (modulus, base64url)",
+      "e":   "AQAB"
+    },
+    {
+      "kty": "EC",
+      "use": "sig",
+      "alg": "ES256",
+      "kid": "5b9c…",
+      "crv": "P-256",
+      "x":   "…", "y": "…"
+    }
+  ]
+}</code></pre>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">Rotation lifecycle</h3>
+        <ol style="padding-left:1.2em;">
+          <li>OP adds the new key to JWKS; signs nothing with it yet</li>
+          <li>RPs that re-cache pick up the new <code>kid</code></li>
+          <li>OP starts signing with the new key</li>
+          <li>Old key remains in JWKS until all in-flight tokens expire</li>
+          <li>OP removes the old key</li>
+        </ol>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Cadence in the wild</h3>
+        <ul>
+          <li><span class="a">Google</span> ~ every 24 h</li>
+          <li><span class="a">Microsoft Entra</span> ~ every 24 h, more in incidents</li>
+          <li><span class="a">Apple</span> ~ every 6 months</li>
+          <li><span class="a">Auth0 / Okta</span> automatic, configurable</li>
+          <li><span class="a">Keycloak</span> manual or scheduled, default off — set a rotation policy</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">RP responsibilities</h3>
+        <ul>
+          <li>Cache JWKS at most an hour or two</li>
+          <li>On unknown <code>kid</code>: refetch <em>once</em>, retry; cache result</li>
+          <li>Don't fetch on every request — it's a DoS amplifier on the OP</li>
+          <li>Use a library with built-in caching (<code>jose</code>, <code>jwks-rsa</code>, <code>python-jose</code>, <code>Microsoft.IdentityModel</code>)</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">The 24-hour outage</h3>
+        <p>If your JWKS cache TTL &gt; OP rotation cadence, you will silently fail to validate new tokens once the OP rotates. Real-world: many small services that "worked fine" for months break at the next rotation.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 11 — SCOPES & USERINFO -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">10</span><h2>Scopes &amp; UserInfo</h2></div>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">OIDC standard scopes</h3>
+        <table>
+          <thead><tr><th>Scope</th><th>Releases</th></tr></thead>
+          <tbody>
+            <tr><td><code>openid</code></td><td>Required marker — without it, no ID token</td></tr>
+            <tr><td><code>profile</code></td><td><code>name</code>, <code>family_name</code>, <code>given_name</code>, <code>picture</code>, <code>locale</code>, …</td></tr>
+            <tr><td><code>email</code></td><td><code>email</code>, <code>email_verified</code></td></tr>
+            <tr><td><code>address</code></td><td>Postal address claim object</td></tr>
+            <tr><td><code>phone</code></td><td><code>phone_number</code>, <code>phone_number_verified</code></td></tr>
+            <tr><td><code>offline_access</code></td><td>Issue a refresh token alongside</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">UserInfo endpoint</h3>
+<pre><code>GET /userinfo
+Authorization: Bearer eyJhbGciOiJSUzI1NiIs...
+
+200 OK
+{
+  "sub":            "1098765432109876543210",
+  "email":          "alice@example.com",
+  "email_verified": true,
+  "name":           "Alice Example",
+  "given_name":     "Alice",
+  "family_name":    "Example",
+  "picture":        "https://lh3...",
+  "locale":         "en"
+}</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">When to use UserInfo</h3>
+        <ul>
+          <li>Refreshing user attributes mid-session — name, picture changed</li>
+          <li>Keeping ID tokens small (release lots of claims via UserInfo, not <code>id_token</code>)</li>
+          <li>Backwards-compatibility with apps that expect a <code>/userinfo</code></li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">When not to</h3>
+        <ul>
+          <li>For login itself — the ID token is enough; UserInfo is one more network hop</li>
+          <li>If your OP returns UserInfo as a JWT (some do), you have to validate that signature too</li>
+          <li>Heavy traffic — cache UserInfo per session, not per request</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Aggregated &amp; distributed claims</h3>
+        <p>For very large or sensitive attributes (medical, government), OIDC supports claims that point to a <em>different</em> endpoint with their own access tokens — rarely seen in practice, but the spec exists.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 12 — RESPONSE TYPES / HYBRID -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">11</span><h2>Response Types — Code, Hybrid, Implicit</h2></div>
+  <p>OIDC inherits OAuth's response_type and adds three more. Most are now deprecated; one is the modern default.</p>
+
+  <table style="margin-top:.3em;">
+    <thead><tr><th><code>response_type</code></th><th>Returns from /authorize</th><th>Status (2025)</th></tr></thead>
+    <tbody>
+      <tr><td><code>code</code></td><td>code</td><td><span class="g">Recommended</span> — Authorisation Code + PKCE</td></tr>
+      <tr><td><code>id_token</code></td><td>id_token (no access token)</td><td><span class="r">Deprecated</span> — implicit, no PKCE</td></tr>
+      <tr><td><code>id_token token</code></td><td>id_token + access_token</td><td><span class="r">Deprecated</span> — full implicit</td></tr>
+      <tr><td><code>code id_token</code></td><td>code + id_token (hybrid)</td><td><span class="a">Niche</span> — front-channel ID + back-channel access</td></tr>
+      <tr><td><code>code token</code></td><td>code + access_token (hybrid)</td><td><span class="r">Avoid</span></td></tr>
+      <tr><td><code>code id_token token</code></td><td>all three</td><td><span class="r">Avoid</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="cols cols-2" style="margin-top:0.3em;">
+    <div class="card amber">
+      <h3 class="a">Why hybrid (<code>code id_token</code>) ever existed</h3>
+      <ul>
+        <li>Some apps wanted to verify the user identity <em>before</em> doing the back-channel token exchange</li>
+        <li>Useful for FAPI 1.0 (Open Banking pre-2022); largely superseded by JARM / pushed authorisation requests</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3 class="g">The 2025 default</h3>
+      <p><span class="a"><code>response_type=code</code></span> + PKCE + nonce + Authorisation Code Flow. Same as OAuth 2.1's only-allowed flow. Everything else is a legacy compatibility lever.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- 13 — LOGOUT & SESSION -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">12</span><h2>Logout &amp; Session Management</h2></div>
+  <p>Login is the easy part. <span class="a">Logging the user out everywhere</span> is the hard one — OIDC has three mechanisms, none of them perfect.</p>
+
+  <div class="cols cols-3" style="margin-top:0.4em;">
+    <div class="card amber">
+      <h3 class="a">RP-Initiated Logout</h3>
+      <ul>
+        <li>RP redirects user to the OP's <code>end_session_endpoint</code></li>
+        <li>Carries <code>id_token_hint</code> + <code>post_logout_redirect_uri</code></li>
+        <li>OP terminates its session, redirects back</li>
+        <li>Simple but — if the user has 5 RPs open, only this one signs out</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3 class="g">Back-Channel Logout</h3>
+      <ul>
+        <li>OP <em>POSTs</em> a signed Logout Token to every RP that is registered for it</li>
+        <li>RP invalidates the user's session in its own store</li>
+        <li>Works even if the user closes the browser</li>
+        <li>Robust; common in Keycloak / Okta / Auth0</li>
+      </ul>
+    </div>
+    <div class="card purple">
+      <h3 class="p">Front-Channel Logout</h3>
+      <ul>
+        <li>OP renders an iframe per RP pointing at <code>frontchannel_logout_uri</code></li>
+        <li>Each iframe signs the user out client-side</li>
+        <li>Browser-dependent; blocked by third-party cookie restrictions</li>
+        <li>Largely superseded by back-channel</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div class="card blue">
+      <h3 class="b">Single-logout reality</h3>
+      <p>Truly synchronous SLO across N apps is hard. The pragmatic stance: <span class="a">back-channel + short ID-token TTLs + refresh-token revocation</span>. Accept eventual consistency for tabs already open.</p>
+    </div>
+    <div class="card red">
+      <h3 class="r">The 3rd-party-cookie cliff</h3>
+      <p>Front-channel logout, the OP's <code>check_session_iframe</code>, and many SSO mechanisms relied on third-party cookies. Chrome's deprecation timeline (2024–2026) is forcing migration to back-channel logout and FedCM-style browser APIs.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- 14 — CIBA -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">13</span><h2>CIBA — Client-Initiated Backchannel Authentication</h2></div>
+  <p>The user is at one device (a kiosk, a call-centre agent's screen) and approves on <em>another</em> (their phone). No browser redirect. <span class="a">FAPI's flow of choice for high-assurance approvals.</span></p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Sequence</h3>
+        <ol style="padding-left:1.2em;">
+          <li>RP POSTs to <code>/bc-authorize</code> with a <code>login_hint</code> identifying the user</li>
+          <li>OP returns an <code>auth_req_id</code> and a polling/notify mode</li>
+          <li>OP pushes a notification to the user's phone</li>
+          <li>User approves</li>
+          <li>RP polls <code>/token</code> with the <code>auth_req_id</code> (or receives a webhook)</li>
+          <li>OP returns ID token + access token</li>
+        </ol>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">Where it's used</h3>
+        <ul>
+          <li>UK Open Banking step-ups (FAPI-CIBA)</li>
+          <li>Mobile-confirm-on-laptop logins (some banks)</li>
+          <li>Call-centre identity verification flows</li>
+          <li>Smart-TV approval (a less-formal variant — OAuth Device Code grant, RFC 8628)</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">CIBA vs Device Code</h3>
+        <ul>
+          <li><span class="a">Device Code (RFC 8628)</span> — TVs, CLIs; user types a code on their phone</li>
+          <li><span class="a">CIBA</span> — RP knows the user's identity already and pings them</li>
+          <li>Both approve on a different device; the trigger is different</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">Implementations</h3>
+        <ul>
+          <li><span class="a">Keycloak</span> — full CIBA support</li>
+          <li><span class="a">ForgeRock / Ping Identity</span> — Open Banking deployments</li>
+          <li><span class="a">Auth0</span> — limited preview</li>
+          <li><span class="a">Microsoft Entra</span> — no native CIBA; use Conditional Access &amp; phone-sign-in instead</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 15 — SIOPv2 / VC -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">14</span><h2>SIOPv2 &amp; Verifiable Credentials</h2></div>
+  <p>The 2020s rewrite of "decentralised identity". <span class="a">SIOPv2</span> (Self-Issued OpenID Provider v2) lets a wallet on the user's device act as its own OP. The RP gets an ID token signed by the wallet, plus optional <span class="a">Verifiable Credentials</span> issued by trusted authorities.</p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">The shift</h3>
+        <ul>
+          <li>Classic OIDC: OP is Google/Microsoft, the RP trusts <em>them</em></li>
+          <li>SIOPv2: OP is the user's wallet (Apple Wallet, Google Wallet, EU Digital Identity Wallet), the RP trusts the <em>credentials inside</em></li>
+          <li>Public-key cryptography on the device, not server-side accounts</li>
+          <li>Built on OAuth + OIDC + Verifiable Credentials Data Model (W3C)</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">Real deployments</h3>
+        <ul>
+          <li><span class="a">EU Digital Identity Wallet</span> — pilots since 2023, mandatory for member states by 2026</li>
+          <li><span class="a">eIDAS 2.0</span> — legal framework, 2024</li>
+          <li><span class="a">UK Digital Identity Trust Framework</span> — voluntary, 2024+</li>
+          <li><span class="a">US mDLs</span> (mobile driving licences) — California, Arizona, Maryland</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Sister specs</h3>
+        <ul>
+          <li><span class="a">OID4VCI</span> — OpenID for Verifiable Credential Issuance — how a wallet receives credentials from an issuer</li>
+          <li><span class="a">OID4VP</span> — OpenID for Verifiable Presentations — how a wallet shows credentials to a verifier (your app)</li>
+          <li><span class="a">OpenID Federation 1.0</span> — how trust anchors are expressed (next slide)</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">For builders today</h3>
+        <p>If you're building a generic web app, SIOPv2 is on the horizon, not the requirement. If you're integrating with EU public services from 2026, or healthcare / banking from a regulated authority, it will land on your roadmap. Watch <span class="a">Sphereon, walt.id, Mattr, Fido Alliance</span> for SDKs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 16 — OPENID FEDERATION 1.0 -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">15</span><h2>OpenID Federation 1.0 (Sep 2024)</h2></div>
+  <p>How do thousands of OPs and RPs <span class="a">trust each other</span> without manual key exchange? OpenID Federation 1.0 — finalised <em>Sep 2024</em> after a long draft phase — answers that with a tree of signed metadata.</p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">The model</h3>
+        <ul>
+          <li>Every entity (RP, OP, intermediate, trust anchor) publishes an Entity Configuration at <code>/.well-known/openid-federation</code></li>
+          <li>Each Entity Configuration is a signed JWT</li>
+          <li>It points up at one or more "superior" entities (its parents in the tree)</li>
+          <li>A "trust chain" from RP up to a Trust Anchor proves "this RP belongs to the federation"</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">Why it matters</h3>
+        <ul>
+          <li>Open Banking (Brazil, Australia)</li>
+          <li>EU eIDAS 2.0 trust framework</li>
+          <li>Research &amp; Education federations (eduGAIN successor)</li>
+          <li>Any sector with N-to-N OP/RP relationships and a regulator</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Vs the SAML federation predecessor</h3>
+        <ul>
+          <li>SAML 2.0 metadata (eduGAIN, InCommon) was XML-signed, fetched on schedule</li>
+          <li>OIDC Federation: JWT-based, dynamic resolution at runtime</li>
+          <li>Solves the "static-XML metadata gets stale" problem</li>
+          <li>First deployments expected through 2025–2026</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">For most teams</h3>
+        <p>OpenID Federation is not yet a daily-driver concern. If your stakeholders are governments, financial regulators, or large research consortia, start tracking it; otherwise, the classic OIDC discovery + per-RP registration is still the standard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 17 — FAPI 2.0 -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">16</span><h2>FAPI 2.0 — Financial-Grade OIDC</h2></div>
+  <p><span class="a">FAPI</span> (Financial-grade API) is an OpenID Foundation security profile. It pins down which OAuth/OIDC parameters and algorithms are mandatory for high-value APIs. <span class="g">FAPI 2.0 Security Profile</span> reached Implementer's Draft 2 in 2024 and is the basis for Open Banking 2.0+.</p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">FAPI 2.0 mandates</h3>
+        <ul>
+          <li><span class="g">PAR</span> — Pushed Authorisation Requests (RFC 9126)</li>
+          <li><span class="g">PKCE</span> — always</li>
+          <li><span class="g">Sender-constrained tokens</span> — DPoP (RFC 9449) or mTLS (RFC 8705)</li>
+          <li><span class="g">private_key_jwt</span> or mTLS for client auth</li>
+          <li>Strong algorithms only — RS256/PS256/ES256; no HS-anything</li>
+          <li>Authorisation Code only; nothing implicit</li>
+        </ul>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">Where you'll meet it</h3>
+        <ul>
+          <li>UK / EU / Brazil / Australia Open Banking</li>
+          <li>Saudi Arabia SAMA Open Banking</li>
+          <li>Insurance, pensions, capital markets (slowly)</li>
+          <li>Any new regulated API written this decade</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Practical implications</h3>
+        <ul>
+          <li>Your OIDC stack must speak DPoP / mTLS — or you're not FAPI</li>
+          <li>Plain bearer tokens are <em>not</em> FAPI-compliant</li>
+          <li>Library landscape: most OSS libs need FAPI plugins (Authlete, ForgeRock, Connect2id are FAPI-certified)</li>
+          <li>Conformance testing is published by the OpenID Foundation</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">FAPI 2.0 vs OAuth 2.1</h3>
+        <ul>
+          <li>OAuth 2.1 is the <em>baseline</em> — what to do, what not to do</li>
+          <li>FAPI 2.0 is a <em>profile</em> — which of the optional extensions you must use</li>
+          <li>FAPI 2.0-compliant ⇒ OAuth 2.1-compliant; the reverse is not true</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Don't pretend you're FAPI</h3>
+        <p>FAPI conformance is testable. Customers in regulated sectors will run the OpenID Foundation conformance suite against your OP. Adding "FAPI-ready" to your marketing without certification is a fast way to lose a deal.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 18 — OIDC vs SAML -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">17</span><h2>OIDC vs SAML — Which When</h2></div>
+
+  <table style="margin-top:.3em;">
+    <thead><tr><th>Property</th><th>SAML 2.0</th><th>OIDC 1.0</th></tr></thead>
+    <tbody>
+      <tr><td>Year</td><td>2005</td><td>2014</td></tr>
+      <tr><td>Encoding</td><td>XML</td><td>JSON / JWT</td></tr>
+      <tr><td>Native to</td><td>Browser only</td><td>Browser, mobile, M2M</td></tr>
+      <tr><td>Mobile / SPA support</td><td><span class="r">Painful</span></td><td><span class="g">First-class</span></td></tr>
+      <tr><td>Signature format</td><td>XML-DSig (notoriously fiddly)</td><td>JWS (clean, well-tested libraries)</td></tr>
+      <tr><td>Discovery</td><td>SAML metadata XML</td><td><code>/.well-known/openid-configuration</code></td></tr>
+      <tr><td>Federation</td><td>eduGAIN, InCommon (mature)</td><td>OpenID Federation 1.0 (just shipped, 2024)</td></tr>
+      <tr><td>Logout</td><td>SLO, SP-initiated, IdP-initiated</td><td>RP-initiated, back-channel, front-channel</td></tr>
+      <tr><td>Enterprise tooling</td><td>Decades of vendor support</td><td>Increasingly the default for new vendors</td></tr>
+      <tr><td>"It just works" libraries</td><td>Few; high TCO</td><td>Many; low TCO</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cols cols-2" style="margin-top:0.3em;">
+    <div class="card amber">
+      <h3 class="a">Pick OIDC when…</h3>
+      <ul>
+        <li>You're building anything mobile, SPA, or native</li>
+        <li>You need M2M too (use Client Credentials)</li>
+        <li>You want fewer XML headaches</li>
+        <li>Your customers are tech-forward</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3 class="g">Stay with SAML when…</h3>
+      <ul>
+        <li>You're selling B2B and Acme Corp's IT team only knows ADFS</li>
+        <li>You're integrating with eduGAIN / InCommon today</li>
+        <li>The IdP is on-prem and ancient (most enterprise IdPs &lt; 2018 are SAML-only)</li>
+      </ul>
+      <p style="margin-top:.2em;">Practical answer for B2B SaaS: <span class="a">support both</span>. WorkOS / Auth0 / Okta normalise SAML and OIDC behind one API.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- 19 — REAL-WORLD IDPs -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">18</span><h2>Real-World OPs — The Quirks</h2></div>
+
+  <table style="margin-top:.3em;">
+    <thead><tr><th>OP</th><th>Issuer URL</th><th>Quirks worth knowing</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="a">Google</span></td>
+        <td><code>https://accounts.google.com</code></td>
+        <td>Issues <code>email_verified</code>; rotates JWKS daily; offline access requires <code>access_type=offline&amp;prompt=consent</code></td>
+      </tr>
+      <tr>
+        <td><span class="a">Microsoft Entra</span></td>
+        <td><code>https://login.microsoftonline.com/{tid}/v2.0</code></td>
+        <td>Tenant-scoped issuer; v1 vs v2 endpoints; <code>tid</code> claim identifies tenant; "common" endpoint exists but resolves per-token</td>
+      </tr>
+      <tr>
+        <td><span class="a">Apple Sign in with Apple</span></td>
+        <td><code>https://appleid.apple.com</code></td>
+        <td>Returns email only on first login; relays via private email; <code>email_verified</code> is "true" but Apple-private</td>
+      </tr>
+      <tr>
+        <td><span class="a">GitHub</span></td>
+        <td>OAuth 2.0; no real OIDC; UserInfo-equivalent at <code>/user</code></td>
+        <td>Often retrofitted as OIDC by libs (e.g. NextAuth); not actually conformant</td>
+      </tr>
+      <tr>
+        <td><span class="a">Okta / Auth0</span></td>
+        <td><code>https://{tenant}.okta.com</code> / <code>{tenant}.auth0.com</code></td>
+        <td>Per-tenant; very FAPI/OIDC-conformant; some custom claim namespaces</td>
+      </tr>
+      <tr>
+        <td><span class="a">Keycloak</span></td>
+        <td><code>https://kc/realms/{realm}</code></td>
+        <td>OSS; FAPI plugin; manual key rotation by default</td>
+      </tr>
+      <tr>
+        <td><span class="a">ZITADEL</span></td>
+        <td>per-tenant URL</td>
+        <td>OSS; multi-tenant SaaS; full OIDC + Federation 1.0 roadmap</td>
+      </tr>
+      <tr>
+        <td><span class="a">AWS Cognito</span></td>
+        <td><code>https://cognito-idp.{region}.amazonaws.com/{poolId}</code></td>
+        <td>Cheap; UX has rough edges; OIDC discovery only on user pools, not identity pools</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="cols cols-2" style="margin-top:0.3em;">
+    <div class="card amber">
+      <h3 class="a">Library landscape</h3>
+      <ul>
+        <li><span class="g">jose</span> (TS / Python / Go) — JWT primitives</li>
+        <li><span class="g">openid-client</span> (Node) — full RP toolkit by Filip Skokan</li>
+        <li><span class="g">Authlib</span> (Python) — OIDC/OAuth client &amp; server</li>
+        <li><span class="g">Microsoft.IdentityModel</span> (.NET) — first-party</li>
+        <li><span class="g">Pac4j</span> (Java) — OIDC + SAML</li>
+        <li><span class="g">NextAuth.js / Auth.js</span> — SSR framework integrations</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3 class="g">Companion deck</h3>
+      <p>The full Auth-as-a-Service provider tour, with self-hosted options and the OAuth specification trail, is in the <a href="https://github.com/BrendanJamesLynskey/Introduction_to_OAuth">Introduction to OAuth</a> and <a href="https://github.com/BrendanJamesLynskey/OAuth_for_MCP">OAuth for MCP</a> decks.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- 20 — WORKLOAD OIDC -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">19</span><h2>Workload OIDC — The Modern CI/CD Pattern</h2></div>
+  <p>Beyond user login, OIDC has quietly become the way <span class="a">workloads</span> authenticate. GitHub Actions, GitLab CI, Buildkite, CircleCI, K8s clusters all sign OIDC tokens; the cloud trusts those tokens via configured issuer URLs. <em>No long-lived static keys.</em></p>
+
+  <div class="cols cols-2" style="margin-top:0.4em;">
+    <div>
+      <div class="card amber">
+        <h3 class="a">GitHub Actions → AWS</h3>
+<pre><code># GitHub action workflow:
+permissions:
+  id-token: write           # request OIDC token
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123:role/deploy
+          aws-region: eu-west-2
+      # → role assumed via STS using OIDC; creds last 1h
+      - run: aws s3 cp ./dist s3://my-bucket --recursive</code></pre>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">AWS-side trust policy</h3>
+<pre><code>{
+  "Effect":"Allow",
+  "Principal":{"Federated":
+    "arn:aws:iam::123:oidc-provider/token.actions.githubusercontent.com"},
+  "Action":"sts:AssumeRoleWithWebIdentity",
+  "Condition":{
+    "StringEquals":{
+      "token.actions.githubusercontent.com:aud":"sts.amazonaws.com",
+      "token.actions.githubusercontent.com:sub":
+         "repo:acme/api:ref:refs/heads/main"
+    }
+  }
+}</code></pre>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">The pattern, generalised</h3>
+        <ol style="padding-left:1.2em;">
+          <li>CI runner has a private key per job</li>
+          <li>Runner signs an OIDC ID token containing claims about the job (repo, ref, environment)</li>
+          <li>Cloud STS trusts the runner's JWKS endpoint as an OIDC issuer</li>
+          <li>Cloud STS verifies the JWT and the per-claim conditions</li>
+          <li>Cloud STS issues short-lived workload credentials (15m–12h)</li>
+        </ol>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">Same pattern, other providers</h3>
+        <ul>
+          <li><span class="a">GCP Workload Identity Federation</span></li>
+          <li><span class="a">Azure Workload Identity Federation</span></li>
+          <li><span class="a">AWS IAM Roles Anywhere</span> — for non-CI external workloads with TLS certs</li>
+          <li><span class="a">EKS Pod Identity / IRSA / GKE Workload Identity / AKS Workload Identity</span> — same idea inside K8s clusters</li>
+          <li><span class="a">SPIFFE / SPIRE</span> — vendor-neutral workload identity, OIDC-style trust on top</li>
+        </ul>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Trust the right claims</h3>
+        <p>Trust the issuer alone gives access to <em>every</em> workload at GitHub. <em>Always</em> condition on <code>repo:</code>, <code>ref:</code>, and ideally <code>environment:</code>. Misconfigurations here have given external repos access to production AWS accounts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 21 — COMMON BUGS -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">20</span><h2>Common Bugs &amp; Mitigations</h2></div>
+
+  <div class="cols cols-2">
+    <div>
+      <div class="card red">
+        <h3 class="r">Trusting <code>email</code> as identity</h3>
+        <p>Two users could have the same verified email at different OPs. Always key on <code>(iss, sub)</code>; treat email as a hint.</p>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Hard-coded JWKS URL</h3>
+        <p>Provider rotates infra; JWKS URL changes. Resolve via discovery, every time, with a sane cache TTL.</p>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Skipping <code>nonce</code> validation</h3>
+        <p>Replay attack: an attacker reuses a captured ID token for a different login attempt. Generate a fresh nonce per request, store in session, compare on return.</p>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Trusting <code>email_verified=false</code></h3>
+        <p>Some OPs return unverified email addresses. Reject them, or treat them as "anonymous, please verify in-app".</p>
+      </div>
+    </div>
+    <div>
+      <div class="card red">
+        <h3 class="r">PII in ID tokens, then shipped to logs</h3>
+        <p>ID tokens often contain email and name. Log only the JTI / sub, never the raw token; strip claims from telemetry.</p>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r"><code>alg</code> confusion</h3>
+        <p>If your library accepts whatever <code>alg</code> the JWT header asks for, an attacker can swap RS256 for HS256 and sign with the public key. Pin allowed algs.</p>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Multi-tenant issuer trust</h3>
+        <p>Trusting <code>https://login.microsoftonline.com/common/v2.0</code> trusts every Microsoft tenant. Always resolve to the specific tenant's issuer using the <code>tid</code> claim, then validate.</p>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">Long-lived ID tokens</h3>
+        <p>ID tokens should be 5–15 minutes. Re-derive sessions from the access/refresh-token pair, not from the original ID token, after the first hop.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- 22 — SUMMARY -->
+<section data-background-color="#0a0a0f">
+  <div class="slide-hdr"><span class="tag">21</span><h2>Summary</h2></div>
+
+  <div class="cols cols-2">
+    <div>
+      <div class="card amber">
+        <h3 class="a">Three takeaways</h3>
+        <ol style="padding-left:1.2em;">
+          <li>OIDC = OAuth 2.0 + the <code>openid</code> scope + an ID token. Same flow you already know; one extra signed assertion comes back.</li>
+          <li>The complexity is in <em>validation</em>: signatures, issuer, audience, nonce, JWKS rotation. Use a conformant library and don't roll your own.</li>
+          <li>OIDC has quietly outgrown "Sign in with Google" — workload OIDC, FAPI 2.0, OpenID Federation 1.0 and SIOPv2 are reshaping identity for the next decade.</li>
+        </ol>
+      </div>
+      <div class="card green" style="margin-top:0.4em;">
+        <h3 class="g">When you'll meet OIDC</h3>
+        <ul>
+          <li>"Sign in with X" buttons</li>
+          <li>B2B SaaS SSO (decks 04 of the *aaS series)</li>
+          <li>CI/CD federation (deck 05 of the *aaS series)</li>
+          <li>Open Banking, eIDAS, regulated APIs</li>
+          <li>Verifiable credentials &amp; digital wallets — the next wave</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card purple">
+        <h3 class="p">Companion decks</h3>
+        <ul>
+          <li><a href="https://github.com/BrendanJamesLynskey/Introduction_to_OAuth">Introduction to OAuth</a> — the framework OIDC sits on</li>
+          <li><a href="https://github.com/BrendanJamesLynskey/OAuth_for_MCP">OAuth for MCP</a> — provider tour for OIDC-capable IdPs</li>
+          <li><a href="https://github.com/BrendanJamesLynskey/Introduction_to_Web_Authentication">Web Authentication</a> — sessions, JWT storage, MFA, RBAC</li>
+          <li><a href="https://github.com/BrendanJamesLynskey/Cloud_aaS_04_SaaS_Architecture">Cloud_aaS_04_SaaS_Architecture</a> — B2B identity for multi-tenant SaaS</li>
+          <li><a href="https://github.com/BrendanJamesLynskey/Cloud_aaS_05_Cloud_Security">Cloud_aaS_05_Cloud_Security</a> — workload OIDC for IAM federation</li>
+        </ul>
+      </div>
+      <div class="card blue" style="margin-top:0.4em;">
+        <h3 class="b">One sentence</h3>
+        <p>"<em>OAuth answers 'may this app act for the user'; OIDC answers 'who is the user' — and almost every login button you've clicked in the last decade is the second of those, riding on the first.</em>"</p>
+      </div>
+      <div class="card red" style="margin-top:0.4em;">
+        <h3 class="r">References</h3>
+        <p style="font-size:.45em;">OpenID Connect Core 1.0 · Discovery 1.0 · Dynamic Client Registration 1.0 · Session Management · RP-Initiated Logout · Back-Channel Logout · CIBA Core · SIOPv2 · OID4VCI / OID4VP · OpenID Federation 1.0 · FAPI 2.0 Security Profile · RFC 7519 (JWT) · RFC 7515/16/17/18 (JWS/JWE/JWA/JWK) · RFC 9068 (JWT Profile for Access Tokens) · RFC 9126 (PAR) · RFC 9449 (DPoP) · openid.net</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.6.1/plugin/highlight/highlight.min.js"></script>
+<script>
+Reveal.initialize({hash:true,slideNumber:'c/t',transition:'fade',transitionSpeed:'fast',
+  controls:true,progress:true,center:false,width:1100,height:900,margin:0.01,
+  plugins:[RevealHighlight],highlight:{theme:'monokai'}});
+</script>
+<script>
+(function(){var h=Reveal.getConfig().height||900,m=Reveal.getConfig().margin||0.02;
+  var maxH=Math.floor(h*(1-2*m))+'px';
+  function fixSlides(){document.querySelectorAll('.reveal .slides>section,.reveal .slides>section>section').forEach(function(s){s.style.display='block';s.style.maxHeight=maxH;});}
+  Reveal.on('ready',fixSlides);Reveal.on('slidechanged',fixSlides);})();
+</script>
+</body>
+</html>
