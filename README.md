@@ -4,6 +4,8 @@ An interactive Reveal.js presentation covering **OpenID Connect (OIDC)** — the
 
 ## ▶ [Open the Presentation](https://brendanjameslynskey.github.io/Introduction_to_OpenID_Connect/)
 
+## 🪪 [Advanced companion — Advanced OpenID Connect](https://brendanjameslynskey.github.io/Advanced_OpenID_Connect/)
+
 ## 🔐 [Companion deck — Introduction to OAuth](https://brendanjameslynskey.github.io/Introduction_to_OAuth/)
 
 ---
@@ -54,6 +56,8 @@ Single self-contained `index.html` — no build step, no npm, no dependencies to
 
 ## See also
 
+- [Advanced OpenID Connect](https://github.com/BrendanJamesLynskey/Advanced_OpenID_Connect) — the deep-end companion to this deck (FAPI 2.0, OpenID Federation 1.0, EUDI Wallet stack, workload OIDC, migration playbooks).
+- [OAuth — A Gentle Primer](https://github.com/BrendanJamesLynskey/OAuth_Primer) — the no-code primer for the underlying delegated-auth model.
 - [Introduction to OAuth](https://github.com/BrendanJamesLynskey/Introduction_to_OAuth) — the delegated-authorisation framework OIDC sits on top of.
 - [OAuth for MCP Servers & Providers](https://github.com/BrendanJamesLynskey/OAuth_for_MCP) — the OAuth profile used by MCP, with OIDC where identity is required.
 - [Introduction to Web Authentication](https://github.com/BrendanJamesLynskey/Introduction_to_Web_Authentication) — passwords, sessions, WebAuthn, MFA — the wider authentication picture.
